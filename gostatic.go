@@ -1,20 +1,31 @@
 package main
 
 import (
-    "fmt"
-    "net/http"
-    "time"
     "log"
+    "net/http"
+    "html/template"
 )
 
 func main() {
-    http.Handle("/", handler)
+    http.HandleFunc("/", root)
+    http.HandleFunc("/greet", greeter)
+    log.Println("Listening...")
     err := http.ListenAndServe(":8080", nil)
     if err != nil {
-        panic(err)
+        log.Fatal("ListenAndServe: ", err)
     }
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "Hello. The time is : " + time.Now().Format(time.RFC850))
+func root(w http.ResponseWriter, r *http.Request) {
+    t, _ := template.ParseFiles("public/index.html")
+    t.Execute(w, nil)
+}
+
+func greeter(w http.ResponseWriter, r *http.Request) {
+    username := r.FormValue("username")
+    t, _ := template.ParseFiles("public/greeter.html")
+    err := t.Execute(w, username)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
 }
